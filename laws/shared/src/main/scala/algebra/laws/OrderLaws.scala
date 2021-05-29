@@ -9,6 +9,8 @@ import org.scalacheck.Prop._
 
 import cats.kernel.instances.all._
 
+import algebra.ring.{CommutativeRing, Signed, TruncatedDivision}
+
 object OrderLaws {
   def apply[A: Eq: Arbitrary: Cogen]: OrderLaws[A] =
     new OrderLaws[A] {
@@ -109,6 +111,75 @@ trait OrderLaws[A] extends Laws {
       if (c < 0) m ?== y
       else if (c == 0) (m ?== x) && (m ?== y)
       else m ?== x
+    }
+  )
+
+  def signed(implicit A: Signed[A]) = new OrderProperties(
+    name = "signed",
+    parent = Some(order),
+    "abs non-negative" -> forAll((x: A) => A.sign(A.abs(x)) != Signed.Negative),
+    "signum returns -1/0/1" -> forAll((x: A) => A.signum(A.abs(x)) <= 1),
+    "signum is sign.toInt" -> forAll((x: A) => A.signum(x) == A.sign(x).toInt)
+  )
+
+  def truncatedDivision(implicit ring: CommutativeRing[A], A: TruncatedDivision[A]) = new DefaultRuleSet(
+    name = "truncatedDivision",
+    parent = Some(signed),
+    "division rule (tquotmod)" -> forAll { (x: A, y: A) =>
+      A.isSignNonZero(y) ==> {
+        val (q, r) = A.tquotmod(x, y)
+        x ?== ring.plus(ring.times(y, q), r)
+      }
+    },
+    "division rule (fquotmod)" -> forAll { (x: A, y: A) =>
+      A.isSignNonZero(y) ==> {
+        val (q, r) = A.fquotmod(x, y)
+        x ?== ring.plus(ring.times(y, q), r)
+      }
+    },
+    "|r| < |y| (tmod)" -> forAll { (x: A, y: A) =>
+      A.isSignNonZero(y) ==> {
+        val r = A.tmod(x, y)
+        A.lt(A.abs(r), A.abs(y))
+      }
+    },
+    "|r| < |y| (fmod)" -> forAll { (x: A, y: A) =>
+      A.isSignNonZero(y) ==> {
+        val r = A.fmod(x, y)
+        A.lt(A.abs(r), A.abs(y))
+      }
+    },
+    "r = 0 or sign(r) = sign(x) (tmod)" -> forAll { (x: A, y: A) =>
+      A.isSignNonZero(y) ==> {
+        val r = A.tmod(x, y)
+        A.isSignZero(r) || (A.sign(r) ?== A.sign(x))
+      }
+    },
+    "r = 0 or sign(r) = sign(y) (fmod)" -> forAll { (x: A, y: A) =>
+      A.isSignNonZero(y) ==> {
+        val r = A.fmod(x, y)
+        A.isSignZero(r) || (A.sign(r) ?== A.sign(y))
+      }
+    },
+    "tquot" -> forAll { (x: A, y: A) =>
+      A.isSignNonZero(y) ==> {
+        A.tquotmod(x, y)._1 ?== A.tquot(x, y)
+      }
+    },
+    "tmod" -> forAll { (x: A, y: A) =>
+      A.isSignNonZero(y) ==> {
+        A.tquotmod(x, y)._2 ?== A.tmod(x, y)
+      }
+    },
+    "fquot" -> forAll { (x: A, y: A) =>
+      A.isSignNonZero(y) ==> {
+        A.fquotmod(x, y)._1 ?== A.fquot(x, y)
+      }
+    },
+    "fmod" -> forAll { (x: A, y: A) =>
+      A.isSignNonZero(y) ==> {
+        A.fquotmod(x, y)._2 ?== A.fmod(x, y)
+      }
     }
   )
 

@@ -123,10 +123,12 @@ class LawTests extends munit.DisciplineSuite {
   checkAll("Long", RingLaws[Long].commutativeRing)
   checkAll("Long", LatticeLaws[Long].boundedDistributiveLattice)
 
-  checkAll("BigInt", RingLaws[BigInt].commutativeRing)
+  checkAll("BigInt", OrderLaws[BigInt].truncatedDivision)
+  checkAll("BigInt", RingLaws[BigInt].euclideanRing)
+  checkAll("BigInt", CombinationLaws[BigInt].signedGCDRing)
 
-  checkAll("FPApprox[Float]", RingLaws[FPApprox[Float]].field)
-  checkAll("FPApprox[Double]", RingLaws[FPApprox[Double]].field)
+  checkAll("FPApprox[Float]", RingLaws[FPApprox[Float]].approxField)
+  checkAll("FPApprox[Double]", RingLaws[FPApprox[Double]].approxField)
 
   // let's limit our BigDecimal-related tests to the JVM for now.
   if (Platform.isJvm) {
