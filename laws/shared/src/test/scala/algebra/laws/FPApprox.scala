@@ -17,6 +17,8 @@ import algebra.ring._
  * equal to 0.1, then it's plausible they could be equal to each other, so we
  * return true. On the other hand, if the error bound is less than 0.1, then we
  * can definitely say they cannot be equal to each other.
+ *
+ * Based on https://dl.acm.org/doi/10.1145/276884.276904
  */
 case class FPApprox[A](approx: A, mes: A, ind: BigInt) {
   import FPApprox.{abs, Epsilon}
@@ -142,4 +144,5 @@ class FPApproxAlgebra[A: Order: FPApprox.Epsilon](implicit ev: Field[A]) extends
   override def fromInt(x: Int): FPApprox[A] = FPApprox.approx(ev.fromInt(x))
   override def fromBigInt(x: BigInt): FPApprox[A] = FPApprox.approx(ev.fromBigInt(x))
   override def fromDouble(x: Double): FPApprox[A] = FPApprox.approx(ev.fromDouble(x))
+
 }
